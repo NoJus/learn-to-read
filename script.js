@@ -12,13 +12,12 @@ class WordCardApp {
             'VAZA',
             'SAGA',
             'LOVA',
-            'PUPA',
             'TĖTĖ',
-            'PICA',
             'MĖTA',
-            'GILĖ',
             'MATAS',
-            'PELĖ'
+            'PELĖ',
+            'SOFA',
+            'KOJA'
         ];
         
         this.audioContext = null;
