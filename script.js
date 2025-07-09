@@ -19,11 +19,8 @@ class WordCardApp {
             'KOJA',
             'KĖDĖ',
             'BĖGA',
-            'LOJA',
-            'MOJA',
             'KOŠĖ',
             'KAVA',
-            'DŪDA',
             'ŠAKA',
             'SĖDI',
             'GULI'
