@@ -16,7 +16,6 @@ class WordCardApp {
             'MĖTA',
             'MATAS',
             'PELĖ',
-            'SOFA',
             'KOJA'
         ];
         

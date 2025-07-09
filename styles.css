@@ -255,7 +255,7 @@ body::after {
 
 @media (max-width: 576px) {
     .word-display {
-        font-size: 2.2rem; /* Increased from 2rem to 2.2rem */
+        font-size: 2.8rem; /* Increased from 2.2rem to 2.8rem */
     }
     
     .word-card {
