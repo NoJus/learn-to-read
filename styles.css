@@ -161,6 +161,9 @@ body::after {
     justify-content: center;
     gap: 0.5rem;
     margin-top: 2rem;
+    flex-wrap: wrap; /* Allow wrapping */
+    row-gap: 0.5rem; /* Add vertical gap for wrapped lines */
+    max-width: 100%;
 }
 
 .dot {
@@ -265,6 +268,12 @@ body::after {
     .arrow-navigation .btn {
         padding: 0.5rem 1rem;
         font-size: 1rem;
+    }
+
+    .dots-navigation {
+        gap: 0.4rem;
+        row-gap: 0.4rem;
+        padding: 0 0.5rem;
     }
 }
 
