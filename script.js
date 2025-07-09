@@ -16,7 +16,17 @@ class WordCardApp {
             'MĖTA',
             'MATAS',
             'PELĖ',
-            'KOJA'
+            'KOJA',
+            'KĖDĖ',
+            'BĖGA',
+            'LOJA',
+            'MOJA',
+            'KOŠĖ',
+            'KAVA',
+            'DŪDA',
+            'ŠAKA',
+            'SĖDI',
+            'GULI'
         ];
         
         this.audioContext = null;
