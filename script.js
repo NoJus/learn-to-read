@@ -104,9 +104,9 @@ class WordCardApp {
             dot.classList.toggle('active', index === this.currentIndex);
         });
         
-        // Update button states
-        this.prevBtn.disabled = this.currentIndex === 0;
-        this.nextBtn.disabled = this.currentIndex === this.words.length - 1;
+        // Always enable navigation buttons for circular navigation
+        this.prevBtn.disabled = false;
+        this.nextBtn.disabled = false;
         
         // Update button styles
         this.prevBtn.classList.toggle('btn-outline-secondary', this.currentIndex === 0);
@@ -158,12 +158,22 @@ class WordCardApp {
             this.currentIndex--;
             this.updateDisplay();
             this.addSwipeAnimation('right');
+        } else {
+            // Jump to last word if at the first word
+            this.currentIndex = this.words.length - 1;
+            this.updateDisplay();
+            this.addSwipeAnimation('right');
         }
     }
     
     nextWord() {
         if (this.currentIndex < this.words.length - 1) {
             this.currentIndex++;
+            this.updateDisplay();
+            this.addSwipeAnimation('left');
+        } else {
+            // Jump to first word if at the last word
+            this.currentIndex = 0;
             this.updateDisplay();
             this.addSwipeAnimation('left');
         }
