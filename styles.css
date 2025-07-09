@@ -5,6 +5,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     position: relative;
     overflow-x: hidden;
+    font-size: 1.25rem; /* Increased base font size */
 }
 
 /* Playful background elements */
@@ -146,7 +147,7 @@ body::after {
 }
 
 .word-display {
-    font-size: 3rem;
+    font-size: 4rem; /* Increased from 3rem to 4rem */
     font-weight: bold;
     color: #333;
     margin: 0;
@@ -240,7 +241,7 @@ body::after {
 /* Responsive Design */
 @media (max-width: 768px) {
     .word-display {
-        font-size: 2.5rem;
+        font-size: 3rem; /* Increased from 2.5rem to 3rem */
     }
     
     .word-card {
@@ -254,7 +255,7 @@ body::after {
 
 @media (max-width: 576px) {
     .word-display {
-        font-size: 2rem;
+        font-size: 2.2rem; /* Increased from 2rem to 2.2rem */
     }
     
     .word-card {

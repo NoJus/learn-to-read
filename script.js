@@ -122,7 +122,7 @@ class WordCardApp {
         for (let i = 0; i < word.length; i++) {
             formatted += word[i];
             if (i === 1 && i < word.length - 1) {
-                formatted += '   '; // Three spaces only after first two letters
+                formatted += '      '; // Six spaces only after first two letters
             }
         }
         return formatted;
