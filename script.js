@@ -1,35 +1,47 @@
-// Learn to Read - JavaScript functionality
-
 class WordCardApp {
     constructor() {
+        // Configuration Constants
+        this.CONFIG = {
+            SWIPE_THRESHOLD: 50,      // Minimum pixels to count as a swipe
+            ANIMATION_DURATION: 300,  // ms
+            SPEECH_RATE: 0.8,         // 0.1 to 10
+            SPEECH_LANG_TARGET: 'lt', // Looking for language code containing 'lt'
+            SPACER: '      '          // The visual space between syllables
+        };
+
         this.currentIndex = 0;
-        this.words = [
-            'LAPĖ',
-            'GĖLĖ',
-            'BITĖ',
-            'KATĖ',
-            'MAMA',
-            'VAZA',
-            'SAGA',
-            'LOVA',
-            'TĖTĖ',
-            'MĖTA',
-            'MATAS',
-            'PELĖ',
-            'KOJA',
-            'KĖDĖ',
-            'BĖGA',
-            'KOŠĖ',
-            'KAVA',
-            'ŠAKA',
-            'SĖDI',
-            'GULI'
-        ];
         
-        this.audioContext = null;
+        // REFACTOR: Data Structure
+        // Storing 'text' (for audio/accessibility) and 'display' (for visuals) separately.
+        // This allows you to handle 3-syllable words or irregular splits easily in the future.
+        this.words = [
+            { text: 'LAPĖ', display: `LA${this.CONFIG.SPACER}PĖ` },
+            { text: 'GĖLĖ', display: `GĖ${this.CONFIG.SPACER}LĖ` },
+            { text: 'BITĖ', display: `BI${this.CONFIG.SPACER}TĖ` },
+            { text: 'KATĖ', display: `KA${this.CONFIG.SPACER}TĖ` },
+            { text: 'MAMA', display: `MA${this.CONFIG.SPACER}MA` },
+            { text: 'VAZA', display: `VA${this.CONFIG.SPACER}ZA` },
+            { text: 'SAGA', display: `SA${this.CONFIG.SPACER}GA` },
+            { text: 'LOVA', display: `LO${this.CONFIG.SPACER}VA` },
+            { text: 'TĖTĖ', display: `TĖ${this.CONFIG.SPACER}TĖ` },
+            { text: 'MĖTA', display: `MĖ${this.CONFIG.SPACER}TA` },
+            { text: 'MATAS', display: `MA${this.CONFIG.SPACER}TAS` },
+            { text: 'PELĖ', display: `PE${this.CONFIG.SPACER}LĖ` },
+            { text: 'KOJA', display: `KO${this.CONFIG.SPACER}JA` },
+            { text: 'KĖDĖ', display: `KĖ${this.CONFIG.SPACER}DĖ` },
+            { text: 'BĖGA', display: `BĖ${this.CONFIG.SPACER}GA` },
+            { text: 'KOŠĖ', display: `KO${this.CONFIG.SPACER}ŠĖ` },
+            { text: 'KAVA', display: `KA${this.CONFIG.SPACER}VA` },
+            { text: 'ŠAKA', display: `ŠE${this.CONFIG.SPACER}KA` },
+            { text: 'SĖDI', display: `SĖ${this.CONFIG.SPACER}DI` },
+            { text: 'GULI', display: `GU${this.CONFIG.SPACER}LI` }
+        ];
+
         this.speechSynthesis = window.speechSynthesis;
+        this.selectedVoice = null;
         
         this.initializeElements();
+        this.initSpeech(); // Initialize voice loading
         this.setupEventListeners();
         this.generateDots();
         this.updateDisplay();
@@ -43,218 +55,80 @@ class WordCardApp {
         this.dotsNavigation = document.getElementById('dotsNavigation');
         this.wordCard = document.getElementById('wordCard');
         
-        // Touch/swipe variables
-        this.touchStartX = 0;
-        this.touchStartY = 0;
-        this.touchEndX = 0;
-        this.touchEndY = 0;
+        // Unified Pointer state
+        this.startX = 0;
+        this.startY = 0;
+    }
+
+    // REFACTOR: Robust Voice Loading
+    initSpeech() {
+        if (!this.speechSynthesis) return;
+
+        // Chrome loads voices asynchronously
+        if (this.speechSynthesis.onvoiceschanged !== undefined) {
+            this.speechSynthesis.onvoiceschanged = () => this.loadVoices();
+        }
+        this.loadVoices();
+    }
+
+    loadVoices() {
+        const voices = this.speechSynthesis.getVoices();
+        // Try to find a Lithuanian voice, otherwise fallback to null (system default)
+        this.selectedVoice = voices.find(voice => voice.lang.includes(this.CONFIG.SPEECH_LANG_TARGET));
+        
+        if (this.selectedVoice) {
+            console.log(`Voice loaded: ${this.selectedVoice.name}`);
+        }
     }
     
     setupEventListeners() {
-        // Speaker button
         this.speakerBtn.addEventListener('click', () => this.speakWord());
-        
-        // Navigation buttons
         this.prevBtn.addEventListener('click', () => this.previousWord());
         this.nextBtn.addEventListener('click', () => this.nextWord());
         
-        // Keyboard navigation
         document.addEventListener('keydown', (e) => {
             switch(e.key) {
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    this.previousWord();
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    this.nextWord();
-                    break;
-                case ' ':
-                    e.preventDefault();
-                    this.speakWord();
-                    break;
+                case 'ArrowLeft': e.preventDefault(); this.previousWord(); break;
+                case 'ArrowRight': e.preventDefault(); this.nextWord(); break;
+                case ' ': e.preventDefault(); this.speakWord(); break;
             }
         });
         
-        // Touch/swipe events
-        this.wordCard.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
-        this.wordCard.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: true });
-        
-        // Mouse events for desktop swipe simulation
-        this.wordCard.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-        this.wordCard.addEventListener('mouseup', (e) => this.handleMouseUp(e));
-        this.wordCard.addEventListener('mouseleave', () => this.handleMouseLeave());
+        // REFACTOR: Unified Pointer Events (Handles Mouse, Touch, and Pen)
+        // Note: Ensure CSS for #wordCard has 'touch-action: none' to prevent scrolling while swiping
+        this.wordCard.addEventListener('pointerdown', (e) => this.handlePointerDown(e));
+        this.wordCard.addEventListener('pointerup', (e) => this.handlePointerUp(e));
+        // pointercancel handles interruptions (like a phone call or scrolling taking over)
+        this.wordCard.addEventListener('pointercancel', (e) => this.handlePointerUp(e));
     }
     
     generateDots() {
         this.dotsNavigation.innerHTML = '';
         this.dots = [];
         
-        for (let i = 0; i < this.words.length; i++) {
+        this.words.forEach((_, i) => {
             const dot = document.createElement('button');
             dot.className = 'dot';
-            dot.setAttribute('data-index', i);
+            dot.setAttribute('aria-label', `Go to word ${i + 1}`); // Accessibility
             dot.addEventListener('click', () => this.goToWord(i));
             this.dotsNavigation.appendChild(dot);
             this.dots.push(dot);
-        }
+        });
     }
     
     updateDisplay() {
-        // Update word display with formatting
-        const word = this.words[this.currentIndex];
-        const formattedWord = this.formatWord(word);
-        this.wordDisplay.textContent = formattedWord;
+        const wordObj = this.words[this.currentIndex];
         
-        // Update dots
+        // Visual Text
+        this.wordDisplay.textContent = wordObj.display;
+        
+        // REFACTOR: Accessibility
+        // Screen readers will read the clean text, ignoring the visual gaps
+        this.wordDisplay.setAttribute('aria-label', wordObj.text); 
+        
         this.dots.forEach((dot, index) => {
             dot.classList.toggle('active', index === this.currentIndex);
         });
         
-        // Always enable navigation buttons for circular navigation
         this.prevBtn.disabled = false;
         this.nextBtn.disabled = false;
-        
-        // Update button styles
-        this.prevBtn.classList.toggle('btn-outline-secondary', this.currentIndex === 0);
-        this.prevBtn.classList.toggle('btn-outline-primary', this.currentIndex !== 0);
-        this.nextBtn.classList.toggle('btn-outline-secondary', this.currentIndex === this.words.length - 1);
-        this.nextBtn.classList.toggle('btn-outline-primary', this.currentIndex !== this.words.length - 1);
-    }
-    
-    formatWord(word) {
-        let formatted = '';
-        for (let i = 0; i < word.length; i++) {
-            formatted += word[i];
-            if (i === 1 && i < word.length - 1) {
-                formatted += '      '; // Six spaces only after first two letters
-            }
-        }
-        return formatted;
-    }
-    
-    speakWord() {
-        const word = this.words[this.currentIndex];
-        
-        // Add visual feedback
-        this.speakerBtn.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-            this.speakerBtn.style.transform = 'scale(1)';
-        }, 100);
-        
-        // Use Web Speech API
-        if (this.speechSynthesis && this.speechSynthesis.speak) {
-            // Cancel any ongoing speech
-            this.speechSynthesis.cancel();
-            
-            const utterance = new SpeechSynthesisUtterance(word);
-            utterance.lang = 'lt-LT'; // Lithuanian
-            utterance.rate = 0.8; // Slightly slower for clarity
-            utterance.pitch = 1.0;
-            utterance.volume = 1.0;
-            
-            this.speechSynthesis.speak(utterance);
-        } else {
-            // Fallback: alert the word (for testing)
-            alert(`Pronunciation: ${word}`);
-        }
-    }
-    
-    previousWord() {
-        if (this.currentIndex > 0) {
-            this.currentIndex--;
-            this.updateDisplay();
-            this.addSwipeAnimation('right');
-        } else {
-            // Jump to last word if at the first word
-            this.currentIndex = this.words.length - 1;
-            this.updateDisplay();
-            this.addSwipeAnimation('right');
-        }
-    }
-    
-    nextWord() {
-        if (this.currentIndex < this.words.length - 1) {
-            this.currentIndex++;
-            this.updateDisplay();
-            this.addSwipeAnimation('left');
-        } else {
-            // Jump to first word if at the last word
-            this.currentIndex = 0;
-            this.updateDisplay();
-            this.addSwipeAnimation('left');
-        }
-    }
-    
-    goToWord(index) {
-        if (index >= 0 && index < this.words.length && index !== this.currentIndex) {
-            const direction = index > this.currentIndex ? 'left' : 'right';
-            this.currentIndex = index;
-            this.updateDisplay();
-            this.addSwipeAnimation(direction);
-        }
-    }
-    
-    addSwipeAnimation(direction) {
-        this.wordCard.classList.add(`swipe-${direction}`);
-        setTimeout(() => {
-            this.wordCard.classList.remove(`swipe-${direction}`);
-        }, 300);
-    }
-    
-    // Touch/swipe handling
-    handleTouchStart(e) {
-        this.touchStartX = e.changedTouches[0].screenX;
-        this.touchStartY = e.changedTouches[0].screenY;
-    }
-    
-    handleTouchEnd(e) {
-        this.touchEndX = e.changedTouches[0].screenX;
-        this.touchEndY = e.changedTouches[0].screenY;
-        this.handleSwipe();
-    }
-    
-    // Mouse handling for desktop
-    handleMouseDown(e) {
-        this.touchStartX = e.screenX;
-        this.touchStartY = e.screenY;
-        this.isMouseDown = true;
-    }
-    
-    handleMouseUp(e) {
-        if (this.isMouseDown) {
-            this.touchEndX = e.screenX;
-            this.touchEndY = e.screenY;
-            this.handleSwipe();
-            this.isMouseDown = false;
-        }
-    }
-    
-    handleMouseLeave() {
-        this.isMouseDown = false;
-    }
-    
-    handleSwipe() {
-        const diffX = this.touchStartX - this.touchEndX;
-        const diffY = this.touchStartY - this.touchEndY;
-        
-        // Minimum swipe distance
-        const minSwipeDistance = 50;
-        
-        // Check if it's a horizontal swipe
-        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
-            if (diffX > 0) {
-                // Swipe left - next word
-                this.nextWord();
-            } else {
-                // Swipe right - previous word
-                this.previousWord();
-            }
-        }
-    }
-}
-
-// Initialize the application when the DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new WordCardApp();
-}); 
